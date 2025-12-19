@@ -2,6 +2,7 @@ use std::path::{Path, PathBuf};
 
 use egraph_serialize::*;
 
+#[cfg(feature = "serde")]
 #[test]
 fn test_round_trip() {
     let mut n_tested = 0;
@@ -14,7 +15,7 @@ fn test_round_trip() {
     assert!(n_tested > 0);
 }
 
-#[cfg(feature = "graphviz")]
+#[cfg(all(feature = "serde", feature = "graphviz"))]
 #[test]
 fn test_graphviz() {
     // Check if `dot` command is available
@@ -29,10 +30,13 @@ fn test_graphviz() {
         let mut egraph = EGraph::from_json_file(entry.as_path()).unwrap();
         names.push(entry.file_stem().unwrap().to_str().unwrap().to_string());
 
-        // If graphviz isn't installed, just test that we can create the dot string, not generate the SVG
-        if no_dot {
-            egraph.to_dot();
-        } else {
+        
+        
+        egraph.to_dot(); // Test `to_dot` always
+
+        // Test `to_svg` only when the graphviz-exec feature is available
+        #[cfg(feature = "graphviz-exec")]
+        {
             let path = Path::new("./tests-viz")
                 .join(entry.file_name().unwrap())
                 .with_extension("svg");
