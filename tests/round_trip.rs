@@ -18,21 +18,13 @@ fn test_round_trip() {
 #[cfg(all(feature = "serde", feature = "graphviz"))]
 #[test]
 fn test_graphviz() {
-    // Check if `dot` command is available
-    let no_dot = std::process::Command::new("dot")
-        .arg("-V")
-        .status()
-        .is_err();
-
     let mut names = Vec::new();
     for entry in test_files() {
         println!("Testing graphviz {entry:?}");
         let mut egraph = EGraph::from_json_file(entry.as_path()).unwrap();
         names.push(entry.file_stem().unwrap().to_str().unwrap().to_string());
 
-        
-        
-        egraph.to_dot(); // Test `to_dot` always
+        egraph.to_dot(); // Always test `to_dot`
 
         // Test `to_svg` only when the graphviz-exec feature is available
         #[cfg(feature = "graphviz-exec")]
@@ -50,9 +42,10 @@ fn test_graphviz() {
         // Generate graphs with inlined leaves as well
         egraph.inline_leaves();
 
-        if no_dot {
-            egraph.to_dot();
-        } else {
+        egraph.to_dot();
+
+        #[cfg(feature = "graphviz-exec")]
+        {
             let path = Path::new("./tests-viz").join(format!(
                 "{}-inlined.svg",
                 entry.file_stem().unwrap().to_str().unwrap()
@@ -67,9 +60,11 @@ fn test_graphviz() {
 
         // Saturate inlining
         egraph.saturate_inline_leaves();
-        if no_dot {
-            egraph.to_dot();
-        } else {
+
+        egraph.to_dot();
+
+        #[cfg(feature = "graphviz-exec")]
+        {
             let path = Path::new("./tests-viz").join(format!(
                 "{}-inlined-saturated.svg",
                 entry.file_stem().unwrap().to_str().unwrap()
